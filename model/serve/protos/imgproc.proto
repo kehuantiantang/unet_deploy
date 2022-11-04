@@ -1,0 +1,31 @@
+syntax = "proto2";
+package order;
+
+// proto协议定义说明:
+// message: 定义数据结构
+// service: 定义接口的名字，入参：message定义的类型，返回值: message定义的类型
+// 编译生产grpc接口（修改接口或者参数，都需要重新编译生成接口文件，并将生产输出的两个pb2.py pb2_grpc.py文件，复制给客户端），步骤如下：
+//1. 打开命令窗口，cd 进入 *.proto 目录下，例如：cd E:\workspace\other\grpc\grpc_server\protos
+//2. 运行命令： python -m grpc_tools.protoc -I./ --python_out=../  --grpc_python_out=../ ./*.proto
+
+// 可以指定编译proto协议生成的调用接口文件目录，例如：输出到目录：grpc_service
+// python -m grpc_tools.protoc -I./ --python_out=../grpc_service/  --grpc_python_out=../grpc_service/ ./*.proto
+
+service ImgProc {
+  rpc do(ImgProcRequest) returns (ImgProcReply) {}
+}
+
+message ImgProcRequest {
+    required string cmd     =  1;
+    optional string reqobj  =  2;
+    optional bytes  img     =  3; // byte data
+    optional bytes  img2    =  4; // byte data
+}
+
+message ImgProcReply {
+    required string result  =  1;
+    optional string resobj  =  2;
+    optional bytes  img     =  3; // byte data
+    optional bytes  img2    =  4; // byte data
+}
+

@@ -1,0 +1,26 @@
+version: "2"
+services:
+  app:
+    container_name: unet_depoly
+    restart: "no"
+    build: model/ectjsc_serving
+    image: deploy/unet
+    user: 1000:1000
+    ports:
+      - "9001:9988"  #service port
+      - "9002:8888"  #jupyter port
+      - "50051:50051" #grpc port
+      - "9010:22"    #ssh ports
+    volumes:
+      - /home/khtt/code/Job_pine_wilt_disease_deploy/FPN_docker/project:/home/jovyan/project
+      - /home/khtt/code/Job_pine_wilt_disease_deploy/FPN_docker/logs:/home/jovyan/logs
+#      - ./datasets:/home/jovyan/datasets
+      - /home/khtt/code/Job_pine_wilt_disease_deploy/FPN_docker/datasets:/home/jovyan/datasets
+      - /etc/localtime:/etc/localtime:ro
+
+    environment:
+      - MYAPP_CUSTOM_CONF=1234567890
+      - MYAPP_DEBUG=True
+      - MYAPP_ENV=DEV
+      - TZ=Asia/Seoul
+      - UID=1000
