@@ -144,3 +144,5 @@ cython_debug/
 *.pth.tar
 *.png
 *.jpg
+
+workdir
