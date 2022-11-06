@@ -3,7 +3,7 @@
 MODEL_NAME=unet
 PROJECT_NAME=${MODEL_NAME}_deploy
 
-DATASET_NAME=20220929_tytyty
+DATASET_NAME=20220929_abcdefg
 ROOT_DATASET=/dataset/khtt/dataset/pine2022/ECOM
 ROOT=/home/khtt/code/insitute_demo/${PROJECT_NAME}
 
