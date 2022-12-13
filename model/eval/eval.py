@@ -2,6 +2,7 @@
 # encoding='utf-8'
 import json
 import os
+from datetime import datetime
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import sys
@@ -43,15 +44,15 @@ from model.preprocessing.preprocess import data_processing
 def parse_args():
     parser = argparse.ArgumentParser(
         description='mmseg test (and eval) a model')
-    
+
     parser.add_argument('--input', help='input')
     parser.add_argument('--output', help='output')
-    parser.add_argument('--IoU', help='dont have IoU')
+    parser.add_argument('--IoU', help='dont have IoU', default = 0.1)
     parser.add_argument('--threshold', default='0.5', help='threshold')
     parser.add_argument('--model', default='unet', help='model used [unet, deeplabv3]')
     parser.add_argument('--model_path', help='model_path')
     parser.add_argument('--voc', help='data processing path')
-    
+
     parser.add_argument('--config',  help='test config file path')
     parser.add_argument('--checkpoint', help='checkpoint file')
     parser.add_argument(
@@ -65,15 +66,15 @@ def parse_args():
         '--format-only',
         action='store_true',
         help='Format the output results without perform evaluation. It is'
-        'useful when you want to format the result to a specific format and '
-        'submit it to the test server')
+             'useful when you want to format the result to a specific format and '
+             'submit it to the test server')
     parser.add_argument(
         '--eval',
         default='mIoU',
         type=str,
         nargs='+',
         help='evaluation metrics, which depends on the dataset, e.g., "mIoU"'
-        ' for generic datasets, and "cityscapes" for Cityscapes')
+             ' for generic datasets, and "cityscapes" for Cityscapes')
     parser.add_argument('--show', action='store_true', help='show results')
     parser.add_argument(
         '--show-dir', help='directory where painted images will be saved')
@@ -86,32 +87,32 @@ def parse_args():
         type=int,
         default=0,
         help='id of gpu to use '
-        '(only applicable to non-distributed testing)')
+             '(only applicable to non-distributed testing)')
     parser.add_argument(
         '--tmpdir',
         help='tmp directory used for collecting results from multiple '
-        'workers, available when gpu_collect is not specified')
+             'workers, available when gpu_collect is not specified')
     parser.add_argument(
         '--options',
         nargs='+',
         action=DictAction,
         help="--options is deprecated in favor of --cfg_options' and it will "
-        'not be supported in version v0.22.0. Override some settings in the '
-        'used config, the key-value pair in xxx=yyy format will be merged '
-        'into config file. If the value to be overwritten is a list, it '
-        'should be like key="[a,b]" or key=a,b It also allows nested '
-        'list/tuple values, e.g. key="[(a,b),(c,d)]" Note that the quotation '
-        'marks are necessary and that no white space is allowed.')
+             'not be supported in version v0.22.0. Override some settings in the '
+             'used config, the key-value pair in xxx=yyy format will be merged '
+             'into config file. If the value to be overwritten is a list, it '
+             'should be like key="[a,b]" or key=a,b It also allows nested '
+             'list/tuple values, e.g. key="[(a,b),(c,d)]" Note that the quotation '
+             'marks are necessary and that no white space is allowed.')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
         help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
+             'in xxx=yyy format will be merged into config file. If the value to '
+             'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+             'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+             'Note that the quotation marks are necessary and that no white space '
+             'is allowed.')
     parser.add_argument(
         '--eval-options',
         nargs='+',
@@ -143,6 +144,8 @@ def parse_args():
         args.cfg_options = args.options
 
     # args.checkpoint = args.model_path
+
+    args.output = '%s_%s'%(args.output, datetime.now().strftime("%Y%m%d_%H%M%S"))
     return args
 
 def read_directory(directory_name, txt_save_path):
@@ -150,7 +153,7 @@ def read_directory(directory_name, txt_save_path):
     for filename in os.listdir(directory_name):
         #         print(filename)
         if 'jpg' in filename or 'png' in filename or 'tif' in filename:
-        # filename = filename[:-4] 
+            # filename = filename[:-4]
             filename = filename.split('.')[0]
             fw.write(filename + '\n')
 
@@ -175,8 +178,8 @@ def maskt2polygon(imbgrs_root, imgrays_root, savepath):
         else:
             warnings.warn("Image is not exist ! %s, %s"%(imbgr_path, imgray_path))
 
-def mask():
-    args = parse_args()
+def mask(args):
+
 
     # mmsegmentation
     if args.model == 'unet':
@@ -237,7 +240,7 @@ def text_save(filename, qwe):
 def main():
     args = parse_args()
     assert args.out or args.eval or args.format_only or args.show \
-        or args.show_dir, \
+           or args.show_dir, \
         ('Please specify at least one operation (save/eval/format/show the '
          'results / save the results) with the argument "--out", "--eval"'
          ', "--format-only", "--show" or "--show-dir"')
@@ -372,7 +375,7 @@ def main():
     fp16_cfg = cfg.get('fp16', None)
     if fp16_cfg is not None:
         wrap_fp16_model(model)
-        
+
     args.checkpoint = args.model_path
     checkpoint = load_checkpoint(model, args.checkpoint, map_location='cpu')
     if 'CLASSES' in checkpoint.get('meta', {}):
@@ -399,7 +402,7 @@ def main():
             'default')
 
     eval_on_format_results = (
-        args.eval is not None and 'cityscapes' in args.eval)
+            args.eval is not None and 'cityscapes' in args.eval)
     if eval_on_format_results:
         assert len(args.eval) == 1, 'eval on format results is not ' \
                                     'applicable for metrics other than ' \
@@ -473,21 +476,23 @@ def main():
     os.makedirs(maskpath, exist_ok=True)
     print('----------------------------------------------------------------------------------------------------------')
 
-    mask()
+    mask(args)
 
-    acc, f1 = f1_score(args.model, args.voc, args.output)
+    acc, f1 = f1_score(args.model, args.voc, args.output, args.IoU)
 
     metric = []
     f = open(json_file, "r", encoding="utf-8")
     a1 = json.load(f)
-    f.close()
-
 
     txt = osp.join(args.output,'평가기록.txt')
-    print(txt)
-    a2 = {'acc':acc, 'f1':f1}
+
+    result = {}
+    result['Acc'], result['mAcc'], result['mIoU'], result['IoU'], result['f1-score'], result['oAcc'] = a1['metric']['aAcc'], \
+         a1['metric']['mAcc'], a1['metric']['mIoU'], a1['metric']['IoU.diseases'], f1, acc
+    print(result)
+
     with open(txt, 'w', encoding='utf-8') as f:
-        f.write('%s\n%s'%(a2, a1))
+        f.write('%s'%result)
 
 
     os.remove(json_file)

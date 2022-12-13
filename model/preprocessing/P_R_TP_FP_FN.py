@@ -3,6 +3,7 @@ import os.path as osp
 import json
 import  numpy as np
 from tqdm import trange
+import shutil
 
 from model.preprocessing.bbox import make_bbox_label, make_bbox_mask
 
@@ -34,7 +35,7 @@ def read_label_txt(full_label_name):
 
 # 计算交集面积
 def intersection_area(label_box, detect_box):
-    
+
     x_label_min, y_label_min, x_label_max, y_label_max = label_box
     x_detect_min, y_detect_min, x_detect_max, y_detect_max = detect_box
     if (x_label_max <= x_detect_min or x_detect_max < x_label_min) or ( y_label_max <= y_detect_min or y_detect_max <= y_label_min):
@@ -61,21 +62,22 @@ def union_area(label_box, detect_box):
 
 
 # label 匹配 detect
-def label_match_detect(label_list, detect_list):
+def label_match_detect(label_list, detect_list, iou_threshold):
 
     #IOU阈值值设�?
-    iou_threshold = 0.1
+    #iou_threshold = 0.1
+    iou_threshold = float(iou_threshold)
 
     #true_positive_list:存储识别正确的对象，false_positive_list存储识别错误的对�?
     true_positive_list = []
     false_positive_list = []
-        
-        
+
+
     for detect in detect_list:
-        
+
         detect_bbox = detect['bbox']
         temp_iou = 0.0
-            
+
         for label in label_list:
             label_bbox = label['bbox']
             i_area = intersection_area(label_bbox, detect_bbox)
@@ -91,18 +93,19 @@ def label_match_detect(label_list, detect_list):
             true_positive_list.append(detect)
         else:
             false_positive_list.append(detect)
-    
+
     return true_positive_list, false_positive_list, label_list
 
 
 
-def f1_score(model_name, input_dir, output_dir):
+def f1_score(model_name, input_dir, output_dir, iou_threshold):
     '''
 
     Args:
         model_name: args.model,
         input_dir: args.input,
         output_dir: args.output,
+        iou_threshold: args.iou,
 
     Returns:
         f1 score
@@ -128,13 +131,13 @@ def f1_score(model_name, input_dir, output_dir):
     p = 0
     f1 = 0
 
-    
+
     all_label = os.listdir(detect_path)
 
     all_list = []
 
     for i in trange(len(all_label), desc='TPFP cal:'):
-        
+
         full_detect_path = os.path.join(detect_path, all_label[i])
         # 分离文件名和文件后缀
         label_name, label_extension = os.path.splitext(all_label[i])
@@ -144,13 +147,13 @@ def f1_score(model_name, input_dir, output_dir):
         full_detect_path = os.path.join(detect_path, '%s.txt'%label_name)
         # 读取标注数据
         if osp.exists(full_label_path) == True and os.path.exists(full_detect_path) == True:
-        # if os.path.exists(full_detect_path) == True:
+            # if os.path.exists(full_detect_path) == True:
             label_list = read_label_txt(full_label_path)
             # 标注数据匹配detect
             detect_list = read_label_txt(full_detect_path)
 
-            tp_lst, fp_lst, lb_lst = label_match_detect(label_list, detect_list)
-            
+            tp_lst, fp_lst, lb_lst = label_match_detect(label_list, detect_list, iou_threshold)
+
             obj_info = {
                 'label_name' : label_name,
                 'tp_lst' : tp_lst,
@@ -192,9 +195,13 @@ def f1_score(model_name, input_dir, output_dir):
 
     f1 = 2 * p * recall / (p + recall) if p + recall !=0 else 0
     acc = count_tp / (count_tp + count_fp + count_fn) if (count_tp + count_fp + count_fn) != 0 else 0
+
     print('tp: ',count_tp,'fp: ',count_fp,'fn: ',count_fn, 'gt:', gt)
     print('pre: ',p,'recall: ',recall)
     print('f1: ',f1, 'acc: ', acc)
+
+    shutil.rmtree(detect_path)
+    shutil.rmtree(label_path)
 
     return acc, f1
 

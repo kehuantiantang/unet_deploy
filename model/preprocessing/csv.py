@@ -83,17 +83,17 @@ def pairs_iou(pred_polygons, gt_polygons, h, w):
 class Polygon_Json(object):
     def __init__(self):
         self.polygon_dict = {"version":"4.5.7", 'flags':{}, 'shapes':[], "imagePath":-1, "imageData":None,
-                        "imageHeight":-1, "imageWidth":-1}
+                             "imageHeight":-1, "imageWidth":-1}
 
     def add_polygons(self, scores, polygons):
         for score, polygon in zip(scores, polygons):
             self.add_polygon(score, polygon)
 
     def add_polygon(self, score, polygon):
-        polygon_template = {"label": '01110200', "score": '%.2f'%(score*100), "points":
+        polygon_template = {"label": '00000000', "score": '%.2f'%(score*100), "points":
             polygon.tolist(),
                             "group_id":
-            "null",
+                                "null",
                             "shape_type": "polygon", "flags": {}}
         self.polygon_dict["shapes"].append(polygon_template)
 

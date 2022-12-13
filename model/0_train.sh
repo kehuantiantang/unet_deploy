@@ -3,12 +3,13 @@
 MODEL_NAME=unet
 PROJECT_NAME=${MODEL_NAME}_deploy
 
-DATASET_NAME=20220929_all
-ROOT_DATASET=/dataset/khtt/dataset/pine2022/ECOM
-ROOT=/home/khtt/code/insitute_demo/${PROJECT_NAME}
+DATASET_NAME=CONTOUR_V3_20221122_230805_DIV70_DEIDF
+
+ROOT=/mnt/d/jbu/평가프로그램_v2_20221107/${PROJECT_NAME}
+ROOT_DATASET=/mnt/d/jbu/0.datasets
 
 
-TRAIN_DATASET=/home/jovyan/datasets/2.labled/${DATASET_NAME}
+TRAIN_DATASET=/home/jovyan/datasets/2.labeled/${DATASET_NAME}
 VOC_DATASET=/home/jovyan/datasets/3.generated/${DATASET_NAME}
 OUTPUT_ROOT=/home/jovyan/datasets/5.artifacts/${PROJECT_NAME}_${DATASET_NAME}
 

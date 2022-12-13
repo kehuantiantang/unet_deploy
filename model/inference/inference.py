@@ -1,5 +1,6 @@
 import os
 import warnings
+from datetime import datetime
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import torch
@@ -39,6 +40,7 @@ def parse_args():
              '(only applicable to non-distributed testing)')
     args = parser.parse_args()
 
+    args.output = '%s_%s'%(args.output, datetime.now().strftime("%Y%m%d_%H%M%S"))
     return args
 
 def read_directory(directory_name, txt_save_path):
