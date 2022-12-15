@@ -107,7 +107,7 @@ def main():
     for root, _, filenames in os.walk(args.input):
         for filename in tqdm(filenames, desc='Inference seg:'):
             name, suffix = filename.split('.')
-            if suffix.lower() in ['tif', 'jpg', 'jpeg', 'bmp', 'png']:
+            if suffix.lower() in ['tif']:
                 img_path = osp.join(root, filename)
                 #print('main loop', img_path)
                 result = inference_segmentor(model, img_path)[0] #> args.threshold
@@ -119,8 +119,8 @@ def main():
 
     os.makedirs(args.output, exist_ok=True)
     #ls
-    record_coordinate2json(save_mask_root, args.model, args.input, args.output, target_path)
-    masktopolygon(args.input, save_mask_root, args.output)
+    record_coordinate2json(save_mask_root, args, target_path, 'inference')
+    # masktopolygon(args.input, save_mask_root, args.output)
 
 
 if __name__ == '__main__':

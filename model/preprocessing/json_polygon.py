@@ -38,50 +38,6 @@ class JsonLoader(object):
             context = json.loads(context, object_hook=lambda d: SimpleNamespace(**d))
             return context
 
-    # def get_objects(self, context):
-    #     if self.get_object_method != None:
-    #         return self.get_object_method(context)
-    #     else:
-    #         width =  int(context.imageWidth)
-    #         height = int(context.imageHeight)
-    #         path = context.imagePath
-    #         obj_dicts = {'name':[], 'bboxes':[], 'category_name':[],
-    #                      'name_pattern': '', 'height':height, 'width':width, 'path':path, 'polygons':[]}
-    #
-    #         for object in context.segmentations:
-    #             bbox = [int(object.box.boxcorner.x), int(object.box.boxcorner.y), int(object.box.boxcorner.x) + int(
-    #                 object.box.boxsize.width), int(object.box.boxcorner.y) + int(
-    #                 object.box.boxsize.height)]
-    #
-    #             obj_dicts['name'].append(object.class_id)
-    #             obj_dicts['category_name'].append(object.class_id)
-    #             obj_dicts['bboxes'].append(bbox)
-    #
-    #             obj_dicts['polygons'].append([[int(p.x), int(p.y)] for p in object.polygon])
-
-
-            # return obj_dicts
-
-    # def get_objects(self, context):
-    #     if self.get_object_method != None:
-    #         return self.get_object_method(context)
-    #     else:
-    #         width = float(context.img_size.width)
-    #         height = float(context.img_size.height)
-    #         path = context.filename
-    #         obj_dicts = {'name':[], 'bboxes':[], 'category_name':[],
-    #                      'name_pattern': '', 'height':height, 'width':width, 'path':path, 'polygons':[],
-    #                      'filename':path}
-    #
-    #         for bboxes, name in zip(context.bboxes, context.category_name) :
-    #             bbox = [int(bboxes[0]), int(bboxes[1]), int(bboxes[2]), int(bboxes[3])]
-    #
-    #             obj_dicts['name'].append(name)
-    #             obj_dicts['category_name'].append(name)
-    #             obj_dicts['bboxes'].append(bbox)
-    #
-    #         return obj_dicts
-
     def get_objects(self, context):
         if self.get_object_method != None:
             return self.get_object_method(context)
@@ -172,7 +128,7 @@ class JsonLoader(object):
         '''
         draw semantic segmentation mask
         :param img:  raw gis image
-        :param obj_dicts:  polygon point
+        :param obj_dicts:  polygon point [n, m, 2], n object, m point, (x, y)
         :param c:  color (0, 0, 0),  (1, 1, 1)
         :param single_channel: if true return segmentation mask [0, 1, 0, 0, 2, 1],
         else return rgb visualization mask

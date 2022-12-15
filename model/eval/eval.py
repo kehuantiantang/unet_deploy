@@ -9,7 +9,7 @@ import sys
 
 sys.path.append('./')
 import os
-from model.preprocessing.P_R_TP_FP_FN import f1_score
+from model.preprocessing.P_R_TP_FP_FN import cal_f1_scoreByIoU
 from model.preprocessing.csv import record_coordinate2json
 import shutil
 import time
@@ -47,7 +47,7 @@ def parse_args():
 
     parser.add_argument('--input', help='input')
     parser.add_argument('--output', help='output')
-    parser.add_argument('--IoU', help='dont have IoU', default = 0.1)
+    parser.add_argument('--IoU', help='dont have IoU', default = 0.1, type=float)
     parser.add_argument('--threshold', default='0.5', help='threshold')
     parser.add_argument('--model', default='unet', help='model used [unet, deeplabv3]')
     parser.add_argument('--model_path', help='model_path')
@@ -129,6 +129,8 @@ def parse_args():
         default=0.5,
         help='Opacity of painted segmentation map. In (0, 1] range.')
     parser.add_argument('--local_rank', type=int, default=0)
+    parser.add_argument('--compare_method', type=str, default='mask')
+
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
@@ -149,6 +151,15 @@ def parse_args():
     return args
 
 def read_directory(directory_name, txt_save_path):
+    '''
+    loop folder and generate the  eval.txt according to the tif file name
+    Args:
+        directory_name:
+        txt_save_path:
+
+    Returns:
+
+    '''
     fw = open(txt_save_path, "w")
     for filename in os.listdir(directory_name):
         #         print(filename)
@@ -179,6 +190,13 @@ def maskt2polygon(imbgrs_root, imgrays_root, savepath):
             warnings.warn("Image is not exist ! %s, %s"%(imbgr_path, imgray_path))
 
 def mask(args):
+    '''
+    inference to obtain the predict polygon
+    Args:
+        args:
+
+    Returns:
+    '''
 
 
     # mmsegmentation
@@ -209,10 +227,12 @@ def mask(args):
     config_file = configs
     checkpoint_file = args.model_path
 
+    # model init
     model = init_segmentor(config_file, checkpoint_file, device='cuda')
 
     img_root = images_path
 
+    # predict and generate the mask
     os.makedirs(pred_mask_dir, exist_ok=True)
     for root, _, filenames in os.walk(img_root):
         for filename in tqdm(filenames, desc='Make mask:'):
@@ -225,9 +245,12 @@ def mask(args):
                 img.save(osp.join(pred_mask_dir, '%s.jpg' % name))
     Logger.info('The inference has been finished, and store the predict results into %s' % pred_mask_dir)
 
-    record_coordinate2json(pred_mask_dir, args.model, args.input, args.output, target_path)
 
-    maskt2polygon(img_root, pred_mask_dir, args.output)
+    return pred_mask_dir, target_path
+
+
+
+    # maskt2polygon(img_root, pred_mask_dir, args.output)
 
 def text_save(filename, qwe):
     file = open(filename, 'a')
@@ -473,14 +496,17 @@ def main():
                 # remove tmp dir when cityscapes evaluation
                 shutil.rmtree(tmpdir)
 
-    os.makedirs(maskpath, exist_ok=True)
     print('----------------------------------------------------------------------------------------------------------')
 
-    mask(args)
+    # inference to generate the mask
+    pred_mask_dir, target_path = mask(args)
+    # mask convert to json
+    polygon_dict = record_coordinate2json(pred_mask_dir, args, target_path, 'eval')
+    acc, f1 = cal_f1_scoreByIoU(polygon_dict, args.IoU)
 
-    acc, f1 = f1_score(args.model, args.voc, args.output, args.IoU)
 
-    metric = []
+    # acc, f1 = f1_score(args.model, args.voc, args.output, args.IoU)
+
     f = open(json_file, "r", encoding="utf-8")
     a1 = json.load(f)
 
@@ -495,8 +521,11 @@ def main():
         f.write('%s'%result)
 
 
-    os.remove(json_file)
-    shutil.rmtree(maskpath)
+    try:
+        os.remove(json_file)
+        shutil.rmtree(pred_mask_dir)
+    except:
+        pass
 
 
 if __name__ == '__main__':

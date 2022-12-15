@@ -3,8 +3,17 @@
 MODEL_NAME=unet
 PROJECT_NAME=${MODEL_NAME}_deploy
 
-DATASET_NAME=split_test_a
-ROOT_DATASET=/dataset/khtt/dataset/pine2022/ECOM/
+#DATASET_NAME=split_test_a
+DATASET_NAME=small
+ROOT_DATASET=/dataset/khtt/dataset/pine2022/ECOM
+
+#DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_orderedAll
+#ROOT_DATASET=/dataset/khtt/dataset/pine2022/elcom
+
+
+#ROOT_DATASET=/dataset/khtt/dataset/pine2022/elcom
+#ROOT_DATASET=/dataset/khtt/dataset/pine2022/ECOM/
+
 ROOT=/home/khtt/code/insitute_demo/${PROJECT_NAME}
 
 

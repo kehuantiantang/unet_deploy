@@ -1,5 +1,7 @@
 # coding=utf-8
 import re
+import warnings
+
 from tqdm import tqdm
 import cv2
 import os.path as osp
@@ -96,12 +98,15 @@ def data_processing(root, target_path):
         # gt_path = path + '_gt.jpg'
         json_path = path + '.json'
 
-        jpg_img = cv2.imread(jpg_path)
-        # jpg_img = cv2.resize(jpg_img, (512, 512))
-        # gt_img = cv2.imread(gt_path)
-
-        context = jl.load_json(json_path)
-        attributes = jl.get_objects(context)
+        try:
+            jpg_img = cv2.imread(jpg_path)
+            assert len(jpg_img.shape) == 3
+            context = jl.load_json(json_path)
+            attributes = jl.get_objects(context)
+        except Exception as e:
+            print(e)
+            warnings.warn('Image %s has problem'%jpg_path)
+            continue
 
         nb_disease = len(attributes['polygons'])
 

@@ -1,9 +1,15 @@
 import json
+import warnings
+from collections import defaultdict
+from multiprocessing.pool import ThreadPool
+
 import cv2
 import os
 import os.path as osp
 import numpy as np
+from tqdm import tqdm
 
+from model.preprocessing.P_R_TP_FP_FN import Polygon_Json
 
 
 def get_coor(img):
@@ -14,7 +20,7 @@ def get_coor(img):
 
     final_contours = []
     for i, contour in enumerate(contours):
-        if len(contour) < 3 or cv2.contourArea(contour) < 20:
+        if len(contour) < 20 or cv2.contourArea(contour) < 16*16:
             continue
 
         final_contours.append(contour)
@@ -65,7 +71,7 @@ def pairs_iou(pred_polygons, gt_polygons, h, w):
 
                 iou = IOU(pred_mask, gt_mask)
 
-                if iou > 0.01:
+                if iou > 0.001:
                     has_overlap = True
                     out_polygon.append(pred_polygon[:, 0])
                     score_record.append(iou)
@@ -80,37 +86,25 @@ def pairs_iou(pred_polygons, gt_polygons, h, w):
 
 
 
-class Polygon_Json(object):
-    def __init__(self):
-        self.polygon_dict = {"version":"4.5.7", 'flags':{}, 'shapes':[], "imagePath":-1, "imageData":None,
-                             "imageHeight":-1, "imageWidth":-1}
 
-    def add_polygons(self, scores, polygons):
-        for score, polygon in zip(scores, polygons):
-            self.add_polygon(score, polygon)
-
-    def add_polygon(self, score, polygon):
-        polygon_template = {"label": '00000000', "score": '%.2f'%(score*100), "points":
-            polygon.tolist(),
-                            "group_id":
-                                "null",
-                            "shape_type": "polygon", "flags": {}}
-        self.polygon_dict["shapes"].append(polygon_template)
-
-    def set_height_width(self, height, width):
-        self.polygon_dict['imageHeight'] = height
-        self.polygon_dict['imageWidth'] = width
-
-    def set_path(self, path):
-        self.polygon_dict['imagePath'] = path
+def writeJsonAndImg(pj, filename, img_dir, output_dir, IoU_threshold = -1, extension = 'jpg'):
+    pj.set_img_path(filename.replace('png', 'jpg'))
+    pj.draw_polygons(raw_img_path=img_dir, target_path = output_dir, extension=extension, IoU_threshold = IoU_threshold)
+    pj.write_json(output_dir, filename.split('.')[0], IoU_threshold = IoU_threshold)
 
 
-    def write_json(self, output_dir, name):
-        with open(os.path.join(output_dir, '%s.json'%name), 'w', encoding="utf-8") as f:
-            json.dump(self.polygon_dict, f, indent=4)
+def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
+    '''
+    generate the json file
+    Args:
+        pred_mask_dir:
+        model_name:
+        output_dir: output json, image file dir
+        voc_dir: mask dir
 
-
-def record_coordinate2json(pred_mask_dir, model_name, y, output_dir, voc_dir):
+    Returns:
+    '''
+    model_name, input_dir, output_dir = args.model, args.input, args.output
 
     if model_name == 'unet':
         detect_dir = f'/{output_dir}/{model_name}_mask/'  # yuce
@@ -124,11 +118,16 @@ def record_coordinate2json(pred_mask_dir, model_name, y, output_dir, voc_dir):
     os.makedirs(detect_dir, exist_ok=True)
     os.makedirs(gt_mask_dir, exist_ok=True)
 
-    for filename in os.listdir(pred_mask_dir):
-        if filename.split('.')[-1].lower() in ['tif', 'jpg', 'png']:
-            pj = Polygon_Json()
+    threadpool = ThreadPool(10)
 
-            # print('polygon 86 ', filename, '!'*10)
+
+    polygon_dict = defaultdict(lambda :{'gt':[], 'pred':[], 'pred_score':[]})
+    for filename in tqdm(sorted(os.listdir(pred_mask_dir)), desc='Polygon compare'):
+        raw_name, extension = filename.split('.')
+        if extension in ['tif', 'jpg', 'png']:
+            # find the polygon in each predict images
+
+            pj = Polygon_Json(raw_name)
 
             pred_img_path = os.path.join(pred_mask_dir, filename)
             pred_img = cv2.imread(pred_img_path)
@@ -136,33 +135,59 @@ def record_coordinate2json(pred_mask_dir, model_name, y, output_dir, voc_dir):
 
             pj.set_height_width(h, w)
 
+            # obtain the predict polygons
             pred_polygons = get_coor(pred_img)
+            # print("153, polygon length", len(pred_polygons), 'already generate the predict polygon', pred_polygons[
+            #     0].shape)
 
-            gt_mask_path = os.path.join(gt_mask_dir, filename.split('.')[0] + '.png')
-            # print('polygon path 94 ', gt_mask_path, '!'*10)
 
-
+            gt_mask_path = os.path.join(gt_mask_dir, '%s.png'%raw_name)
             if osp.exists(gt_mask_path):
                 gt_mask = cv2.imread(gt_mask_path)
+                # shape m * n * 2, m object, n points, (x, y)
                 gt_polygons = get_coor(gt_mask)
 
-                # print('gt,pred size ', gt_mask.shape, pred_img.shape)
-                # print('polygon  100 gt ', len(gt_polygons), gt_polygons[0].shape if len(gt_polygons) > 0 else -1,
-                #       '!'*10)
-                # print('polygon  101 pred ', len(pred_polygons), pred_polygons[0].shape if len(pred_polygons) > 0 else
-                # -1,
-                #       '!'*10)
+                pj.gt_polygons = gt_polygons
+                polygon_dict[raw_name]['gt'] = gt_polygons
 
-                part_ious, with_score_polygons = pairs_iou(pred_polygons, gt_polygons, h, w)
+                # print("162, polygon length", len(gt_polygons), 'already generate the gt polygon',
+                #       gt_polygons[0].shape)
 
-                # print('polygon  104 overlap ', len(with_score_polygons), with_score_polygons[0].shape if len(
-                #     with_score_polygons) > 0 else -1, '!'*10)
 
-                pj.add_polygons(part_ious, with_score_polygons)
+                # [score1, score2, score3, ...], [polygon1, polygon2, polygon3, ...]
+                part_ious, with_polygons = pairs_iou(pred_polygons, gt_polygons, h, w)
+
+                # print('overlap polygon:', len(with_polygons), with_polygons[0].shape, len(part_ious), len(pred_polygons))
+                # print('iou score ',part_ious)
+
+                polygon_dict[raw_name]['pred'] = with_polygons
+                polygon_dict[raw_name]['pred_score'] = part_ious
+
+
+                pj.add_polygons(part_ious, with_polygons)
 
             else:
                 for polygon in pred_polygons:
                     pj.add_polygon(0, polygon[:, 0])
 
-            pj.set_path(filename.replace('png', 'jpg'))
-            pj.write_json(output_dir, filename.split('.')[0])
+            if status == 'eval':
+                kwds = {'pj':pj, 'filename':filename, 'img_dir':f'/{voc_dir}/JPEGImages', 'output_dir':output_dir,
+                        'extension':'jpg'}
+            elif status == 'inference':
+                kwds = {'pj':pj, 'filename':filename, 'img_dir':input_dir, 'output_dir':output_dir, 'extension':'tif'}
+            else:
+                raise ValueError('Status must be [eval, inference] but obtain %s'%status)
+
+            threadpool.apply_async(writeJsonAndImg, kwds = kwds)
+            # writeJsonAndImg(**kwds)
+
+
+            # pj.set_img_path(filename.replace('png', 'jpg'))
+            # pj.draw_polygons(raw_img_path=f'/{voc_dir}/JPEGImages', target_path = output_dir, extension='jpg')
+            # pj.write_json(output_dir, filename.split('.')[0])
+
+    threadpool.close()
+    threadpool.join()
+
+    return polygon_dict
+
