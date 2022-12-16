@@ -1,13 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # encoding='utf-8'
-import json
-import os
-from datetime import datetime
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import sys
-
 sys.path.append('./')
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+from model.preprocessing.logger import Logger, VERSION
+from model.preprocessing.logger import self_print as print
+
+import pprint
+import json
+from datetime import datetime
 import os
 from model.preprocessing.P_R_TP_FP_FN import cal_f1_scoreByIoU
 from model.preprocessing.csv import record_coordinate2json
@@ -24,20 +27,18 @@ from mmseg import digit_version
 from mmseg.apis import multi_gpu_test, single_gpu_test
 from mmseg.datasets import build_dataloader, build_dataset
 from mmseg.models import build_segmentor
-from mmseg.utils import build_ddp, build_dp, get_device, setup_multi_processes
+from mmseg.utils import build_ddp, build_dp, get_device
 from mmseg.utils import setup_multi_processes
 
 import argparse
 import os.path as osp
 from PIL import Image
-import numpy as np
 from tqdm import tqdm
 
 import numpy as np
 import cv2
 
 from mmseg.apis import init_segmentor, inference_segmentor
-from model.preprocessing.logger import Logger
 from model.preprocessing.preprocess import data_processing
 
 
@@ -45,14 +46,26 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='mmseg test (and eval) a model')
 
-    parser.add_argument('--input', help='input')
-    parser.add_argument('--output', help='output')
-    parser.add_argument('--IoU', help='dont have IoU', default = 0.1, type=float)
-    parser.add_argument('--threshold', default='0.5', help='threshold')
-    parser.add_argument('--model', default='unet', help='model used [unet, deeplabv3]')
-    parser.add_argument('--model_path', help='model_path')
+    root = '/dataset/khtt/dataset/pine2022/ECOM'
+    dataset_name = 'small'
+    parser.add_argument('--input', help='input', default = osp.join(root,'2.labled', dataset_name))
     parser.add_argument('--voc', help='data processing path')
+    parser.add_argument('--output', help='output')
+    # parser.add_argument('--IoU', nargs='+', type=float, default = [0.0, 1.0, 0.1], help = 'IoU threhsold to calculate AUC curve')
+    parser.add_argument('--IoU', type=float, default = 0.5, help = 'IoU threhsold to calculate AUC curve')
+    parser.add_argument('--model_path', help='model_path')
+    parser.add_argument('--model', default='unet', help='model used [unet, deeplabv3]')
 
+
+
+    # parser.add_argument('--input', help='input')
+    # parser.add_argument('--voc', help='data processing path')
+    # parser.add_argument('--output', help='output')
+    # parser.add_argument('--IoU', nargs='+', type=float, default = [0.0, 1.0, 0.1], help = 'IoU threhsold to calculate AUC curve')
+    # parser.add_argument('--model_path', help='model_path')
+    # parser.add_argument('--model', default='unet', help='model used [unet, deeplabv3]')
+
+    parser.add_argument('--threshold', default='0.5', help='threshold')
     parser.add_argument('--config',  help='test config file path')
     parser.add_argument('--checkpoint', help='checkpoint file')
     parser.add_argument(
@@ -148,6 +161,9 @@ def parse_args():
     # args.checkpoint = args.model_path
 
     args.output = '%s_%s'%(args.output, datetime.now().strftime("%Y%m%d_%H%M%S"))
+
+    print('Version: {}'.format(VERSION), '=' * 50)
+    pprint.pprint(args, indent=6)
     return args
 
 def read_directory(directory_name, txt_save_path):
@@ -500,9 +516,14 @@ def main():
 
     # inference to generate the mask
     pred_mask_dir, target_path = mask(args)
+
     # mask convert to json
     polygon_dict = record_coordinate2json(pred_mask_dir, args, target_path, 'eval')
-    acc, f1 = cal_f1_scoreByIoU(polygon_dict, args.IoU)
+    # obtain the tp, fp, tn, fn to calculate the precision, recall, f1-score
+
+    # import sys
+    # sys.exit(0)
+    acc, f1 = cal_f1_scoreByIoU(polygon_dict)
 
 
     # acc, f1 = f1_score(args.model, args.voc, args.output, args.IoU)

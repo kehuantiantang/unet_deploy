@@ -4,7 +4,7 @@ import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import sys
 sys.path.append('./')
-# sys.path.insert(0, '/home/jovyan/model/jbnu')
+from model.preprocessing.logger import self_print as print
 import argparse
 import copy
 import os.path as osp
@@ -23,9 +23,6 @@ from mmseg.datasets import build_dataset
 from mmseg.models import build_segmentor
 from mmseg.utils import (collect_env, get_device, get_root_logger,
                          setup_multi_processes)
-
-__version__ = '0.26.0'
-
 
 from model.preprocessing.preprocess import data_processing
 

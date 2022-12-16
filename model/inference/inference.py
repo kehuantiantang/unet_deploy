@@ -3,10 +3,10 @@ import warnings
 from datetime import datetime
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-import torch
 import sys
 sys.path.append('./')
 # sys.path.insert(0, '/home/jovyan/model/jbnu')
+from model.preprocessing.logger import self_print as print
 import argparse
 import os.path as osp
 from PIL import Image
@@ -16,7 +16,6 @@ import cv2
 from model.preprocessing.csv import record_coordinate2json
 from mmseg.apis import init_segmentor, inference_segmentor
 from model.preprocessing.logger import Logger
-from model.preprocessing.preprocess import data_processing
 
 
 def parse_args():

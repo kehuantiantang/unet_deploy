@@ -1,3 +1,4 @@
+
 import os
 import os.path as osp
 import json
@@ -5,11 +6,8 @@ import warnings
 
 import cv2
 import  numpy as np
-from tqdm import trange
-import shutil
 
-from model.preprocessing.bbox import make_bbox_label, make_bbox_mask
-
+from model.preprocessing.logger import Logger
 
 
 class Polygon_Json(object):
@@ -55,7 +53,7 @@ class Polygon_Json(object):
         self.polygon_dict['imagePath'] = path
 
 
-    def write_json(self, output_dir, name, IoU_threshold = -1):
+    def write_json(self, output_dir, name):
         '''
         if IoU score small than threshold it will not draw
         Args:
@@ -67,19 +65,18 @@ class Polygon_Json(object):
 
         '''
         for score, polygon in zip(self.scores, self.pred_polygons):
-            if score > IoU_threshold:
-                polygon_template = {"label": '00000000', "score": '%.2f'%(score*100), "points":
-                    polygon.tolist(),
-                                    "group_id":
-                                        "null",
-                                    "shape_type": "polygon", "flags": {}}
-                self.polygon_dict["shapes"].append(polygon_template)
+            polygon_template = {"label": '00000000', "score": '%.2f'%(score*100), "points":
+                polygon.tolist(),
+                                "group_id":
+                                    "null",
+                                "shape_type": "polygon", "flags": {}}
+            self.polygon_dict["shapes"].append(polygon_template)
 
         with open(os.path.join(output_dir, '%s.json'%name), 'w', encoding="utf-8") as f:
             json.dump(self.polygon_dict, f, indent=4)
 
 
-    def draw_polygons(self, raw_img_path, target_path,  extension = 'tif', IoU_threshold = -1):
+    def draw_polygons(self, raw_img_path, target_path,  extension = 'tif'):
         '''
         if the iou score small than IoU threshold, it will not draw
         Args:
@@ -101,47 +98,35 @@ class Polygon_Json(object):
             # draw pred
             pred_polygons = []
             for score, polygon in zip(self.scores, self.pred_polygons):
-                if score > IoU_threshold:
                     pred_polygons.append(polygon)
 
             img = cv2.polylines(img, pred_polygons, True, (0, 255, 0), 2)
             cv2.imwrite(osp.join(target_path, '%s.jpg'%self.name), img)
         except Exception as e:
-            print(e)
+            Logger.critical(e)
             warnings.warn("Could not write polygon file into image, %s"%path)
 
 
-def cal_f1_scoreByIoU(polygon_dict, IoU_threshold):
-    '''
-    polygon_dict
-        include the gt and predict polygon list
-        also iou score(gt, predict overlap area) has been included for calculate tp, fp, tn
-    Args:
-        polygon_dict:
-        IoU_threshold:
+def cal_f1_scoreByIoU(polygon_dict):
+    nb_tp, nb_fp, nb_fn, nb_gt = 0, 0, 0, 0
+    for image_id, value in polygon_dict.items():
+        tps, fps, fp_repeats, gts = value['tp'], value['fp'], value['fp_repeat'], value['gt']
+        nb_tp += len(tps)
 
-    Returns:
+        nb_fp += len(fps)
+        nb_fp += len(fp_repeats)
 
-    '''
-    tp, fp,  gt = 0, 0, 0,
-    for image_id in sorted(polygon_dict.keys()):
-        value = polygon_dict[image_id]
-        gt_polygons, pred_polygons, pred_scores = value['gt'], value['pred'], np.array(value['pred_score']).astype(
-            np.float64)
-        single_gt, single_tp, single_fp = len(gt_polygons), sum(pred_scores >= IoU_threshold),   sum(pred_scores < IoU_threshold)
-        # print(image_id, single_gt, single_tp, single_fp)
+        nb_gt += len(gts)
 
-        gt += single_gt
-        tp += single_tp
-        fp += single_fp
 
-    fn = gt - tp
-    recall, precision = tp / (tp + fn + 1e-16), tp / (tp + fp + 1e-16)
+    nb_fn = nb_gt - nb_tp
+    recall, precision = nb_tp / (nb_tp + nb_fn + 1e-16), nb_tp / (nb_tp + nb_fp + 1e-16)
     f1_score = 2 * precision * recall * 1.0 / (recall + precision + 1e-16)
 
-    acc = tp / (tp + fp + fn + 1e-16)
+    acc = nb_tp / (nb_tp + nb_fp + nb_fn + 1e-16)
 
-    print(f'Total:{f1_score}, recall:{round(recall, 3)}, prec:{round(precision, 3)}, tp:{tp}, fp:{fp}, fn:{fn}, gt:{gt}')
+    Logger.info(f'{f1_score}, recall:{round(recall, 3)}, prec:{round(precision, 3)}, tp:{nb_tp}, fp:{nb_fp}, fn:{nb_fn}, gt:{nb_gt}')
+
 
     return acc, f1_score
 

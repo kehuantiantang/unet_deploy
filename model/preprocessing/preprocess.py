@@ -9,7 +9,7 @@ import os
 
 from model.preprocessing.json_polygon import JsonLoader
 from model.preprocessing.pascal_voc_utils import Writer
-from model.preprocessing.misc import namespace2dict, save_json
+from model.preprocessing.misc import namespace2dict
 
 
 def read_dir(path):
@@ -128,10 +128,10 @@ def data_processing(root, target_path):
         # jpg_mask = cv2.resize(jpg_mask, (512, 512), interpolation=cv2.INTER_NEAREST_EXACT)
 
         # if nb_disease == 0:
-        cv2.imwrite(osp.join(img_target, name + '_%02d.jpg' % nb_disease), jpg_img)
+        cv2.imwrite(osp.join(img_target, '%s.jpg'%name), jpg_img)
         # cv2.imwrite(osp.join(vis_target, name + '_%02d.jpg' % nb_disease),
         #             cv2.hconcat([jpg_img_boxes, jpg_img_polygons]))
-        cv2.imwrite(osp.join(mask_target, name + '_%02d.png' % nb_disease), jpg_mask)
+        cv2.imwrite(osp.join(mask_target, '%s.png'%name), jpg_mask)
         # save_json(osp.join(json_target, name + '_%02d.json' % nb_disease), objs)
 
     print('The number of disease: %d, disease image/no disease image/total: %d/%d/%d' % (disease_counter,

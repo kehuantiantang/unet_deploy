@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
 import logging
 import os
 import sys
@@ -11,7 +10,13 @@ import sys
 DEFAULT_LOGFILE_LEVEL = 'debug'
 DEFAULT_STDOUT_LEVEL = 'info'
 DEFAULT_LOG_FILE = './default.log'
-DEFAULT_LOG_FORMAT = '%(asctime)s %(levelname)-7s %(message)s'
+
+VERSION = '1.1.1'
+DEFAULT_LOG_FORMAT = VERSION + '|%(asctime)s %(levelname)-7s %(message)s'
+
+
+def self_print(*args, **kwargs):
+    print('%s|'%VERSION, *args, **kwargs)
 
 LOG_LEVEL_DICT = {
     'debug': logging.DEBUG,
@@ -91,6 +96,8 @@ class Logger(object):
             console.setFormatter(fmt)
             Logger.logger.addHandler(console)
 
+        print('Version: {}'.format(VERSION), '=' * 50)
+
     @staticmethod
     def set_log_file(file_path):
         Logger.log_file = file_path
@@ -127,7 +134,7 @@ class Logger(object):
         Logger.check_logger()
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
-        prefix = '[{}, {}]'.format(filename,lineno)
+        prefix = '[{}|{}, {}]'.format(VERSION, filename,lineno)
         Logger.logger.debug('{} {}'.format(prefix, ''.join(map(str,message))))
 
     @staticmethod
@@ -135,28 +142,30 @@ class Logger(object):
         Logger.check_logger()
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
-        prefix = '[{}, {}]'.format(filename,lineno)
+        prefix = '[{}|{}, {}]'.format(VERSION, filename,lineno)
         Logger.logger.info('{} {}'.format(prefix, ''.join(map(str,message))))
+        self_print('{} {}'.format(prefix, ''.join(map(str,message))))
 
     @staticmethod
     def info_once(*message):
         Logger.check_logger()
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
-        prefix = '[{}, {}]'.format(filename, lineno)
+        prefix = '[{}|{}, {}]'.format(VERSION, filename,lineno)
 
         if Logger._caches.get((prefix, message)) is not None:
             return
 
         Logger.logger.info('{} {}'.format(prefix, ''.join(map(str,message))))
         Logger._caches[(prefix, ''.join(message))] = True
+        self_print('{} {}'.format(prefix, ''.join(map(str,message))))
 
     @staticmethod
     def warn(*message):
         Logger.check_logger()
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
-        prefix = '[{}, {}]'.format(filename,lineno)
+        prefix = '[{}|{}, {}]'.format(VERSION, filename,lineno)
         Logger.logger.warning('{} {}'.format(prefix, ''.join(map(str,message))))
 
     @staticmethod
@@ -164,7 +173,7 @@ class Logger(object):
         Logger.check_logger()
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
-        prefix = '[{}, {}]'.format(filename,lineno)
+        prefix = '[{}|{}, {}]'.format(VERSION, filename,lineno)
         Logger.logger.error('{} {}'.format(prefix, ''.join(map(str,message))))
 
     @staticmethod
@@ -172,7 +181,7 @@ class Logger(object):
         Logger.check_logger()
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
-        prefix = '[{}, {}]'.format(filename,lineno)
+        prefix = '[{}|{}, {}]'.format(VERSION, filename,lineno)
         Logger.logger.critical('{} {}'.format(prefix, ''.join(map(str,message))))
 
 

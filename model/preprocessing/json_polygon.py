@@ -72,11 +72,11 @@ class JsonLoader(object):
 
                     xmin, ymin, xmax, ymax = min(hs), min(ws), max(hs), max(ws)
 
-                    obj_dicts['name'].append('disease')
-                    obj_dicts['bboxes'].append([xmin, ymin, xmax, ymax])
-                    obj_dicts['category_name'].append('disease')
-
-                    obj_dicts['polygons'].append(points)
+                    if shape_type == 'polygon':
+                        obj_dicts['name'].append('disease')
+                        obj_dicts['bboxes'].append([xmin, ymin, xmax, ymax])
+                        obj_dicts['category_name'].append('disease')
+                        obj_dicts['polygons'].append(points)
 
 
             return obj_dicts
