@@ -1,5 +1,5 @@
-
 from collections import defaultdict
+import warnings
 from multiprocessing.pool import ThreadPool
 import cv2
 import os
@@ -50,7 +50,7 @@ def polygon_iou(pred_polygons, gt_polygons, h, w):
     """
     m, n = len(pred_polygons), len(gt_polygons)
     pred_masks, gt_masks = [], []
-    path = '/home/jovyan/logs'
+    # path = '/home/jovyan/logs'
     for i, pred_polygon in enumerate(pred_polygons):
         mask = np.zeros(shape=(h, w), dtype=np.uint8)
         # print(pred_polygon.shape, 'pred_polygon')
@@ -90,49 +90,55 @@ def pairs_iou(pred_polygons, gt_polygons, h, w, IoU_threshold = 0.5):
 
     '''
     # m, n, computer to obtain iou score
-    pred_gt_iou_matrix = polygon_iou(pred_polygons, gt_polygons, h, w)
-    # m: number of pred polygons, n: number of gt polygons
-    m, n = pred_gt_iou_matrix.shape
-    # along the gt axis
-    i =  np.argmax(pred_gt_iou_matrix, axis=1)
-    # print(i, 'i')
-    ious = np.array([pred_gt_iou_matrix[index][v] for index, v in zip(range(len(i)), i)])
-
-    is_select = np.zeros((m, ), dtype=np.bool)
-
-    detected_set =  set()
-    # filter the iou score large than IoU threshold
-    # print(ious.shape, ious, IoU_threshold)
-    overlap_index = np.arange(m)[ious > IoU_threshold]
-    overlap_ious = ious[ious > IoU_threshold]
-    # high to low order for iou
-    indices = np.argsort(-overlap_ious)
-
-    for j in overlap_index[indices]:
-        d = i[j]
-        if d not in detected_set:
-            is_select[j] = True
-            detected_set.add(d)
-
-            if len(detected_set) == n:
-                break
-
     tp_fp_dict = {'fp_repeat':[], 'tp':[], 'fp':[]}
+    try:
+        pred_gt_iou_matrix = polygon_iou(pred_polygons, gt_polygons, h, w)
+        # m: number of pred polygons, n: number of gt polygons
+        m, n = pred_gt_iou_matrix.shape
+
+        if m == 0 or n == 0:
+            return tp_fp_dict
+        # along the gt axis
+
+        i =  np.argmax(pred_gt_iou_matrix, axis=1)
+        # print(i, 'i')
+        ious = np.array([pred_gt_iou_matrix[index][v] for index, v in zip(range(len(i)), i)])
+
+        is_select = np.zeros((m, ), dtype=np.bool)
+
+        detected_set =  set()
+        # filter the iou score large than IoU threshold
+        # print(ious.shape, ious, IoU_threshold)
+        overlap_index = np.arange(m)[ious > IoU_threshold]
+        overlap_ious = ious[ious > IoU_threshold]
+        # high to low order for iou
+        indices = np.argsort(-overlap_ious)
+
+        for j in overlap_index[indices]:
+            d = i[j]
+            if d not in detected_set:
+                is_select[j] = True
+                detected_set.add(d)
+
+                if len(detected_set) == n:
+                    break
 
 
-    for index in range(len(ious)):
-        score = ious[index]
-        # print(score, 'score', pred_polygons[0].shape)
-        if not is_select[index]:
-            if score > IoU_threshold:
-                # repeat
-                tp_fp_dict['fp_repeat'].append((score, pred_polygons[index][:, 0]))
+        for index in range(len(ious)):
+            score = ious[index]
+            # print(score, 'score', pred_polygons[0].shape)
+            if not is_select[index]:
+                if score > IoU_threshold:
+                    # repeat
+                    tp_fp_dict['fp_repeat'].append((score, pred_polygons[index][:, 0]))
+                else:
+                    # fp
+                    tp_fp_dict['fp'].append((score, pred_polygons[index][:, 0]))
             else:
-                # fp
-                tp_fp_dict['fp'].append((score, pred_polygons[index][:, 0]))
-        else:
-            # tp
-            tp_fp_dict['tp'].append((score, pred_polygons[index][:, 0]))
+                # tp
+                tp_fp_dict['tp'].append((score, pred_polygons[index][:, 0]))
+    except Exception as e:
+        warnings.warn('{}'.format(e))
 
     return tp_fp_dict
 
@@ -210,7 +216,7 @@ def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
                 else:
                     raise ValueError('Can only use compare method mask or json, but get %s'%args.compare_method)
 
-
+                # add ground truth to polygon visualization
                 pj.gt_polygons = gt_polygons
 
 
@@ -230,7 +236,7 @@ def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
                 [pj.add_polygon(iou, polygon) for (iou, polygon) in fps]
                 [pj.add_polygon(iou, polygon) for (iou, polygon) in fp_repeats]
 
-                print('tp: %d, fp: %d, fp_repeat: %d, gt:%d'%(len(tps), len(fps), len(fp_repeats), len(gt_polygons)))
+                print('tp: %d, fp: %d, fp_repeat: %d, gt:%d, %s'%(len(tps), len(fps), len(fp_repeats), len(gt_polygons), raw_name))
 
 
                 # polygon_dict[raw_name]['pred'] = with_polygons

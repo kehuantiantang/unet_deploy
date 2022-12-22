@@ -110,29 +110,31 @@ def data_processing(root, target_path):
 
         nb_disease = len(attributes['polygons'])
 
-        disease_counter += nb_disease
-        if nb_disease > 0:
-            dis_img_counter += 1
-        else:
-            no_dis_img_counter += 1
-        total_img += 1
+        if len(nb_disease) > 0:
 
-        objs = namespace2dict(context)
+            disease_counter += nb_disease
+            if nb_disease > 0:
+                dis_img_counter += 1
+            else:
+                no_dis_img_counter += 1
+            total_img += 1
 
-        # draw bbox image
-        # jpg_img_boxes = jl.draw_bboxes(jpg_img, attributes)
-        # draw polygon image
-        jpg_img_polygons = jl.draw_polygons(jpg_img, attributes)
-        # draw image
-        jpg_mask = jl.draw_mask(jpg_img, attributes, c=(1, 1, 1), single_channel=True)
-        # jpg_mask = cv2.resize(jpg_mask, (512, 512), interpolation=cv2.INTER_NEAREST_EXACT)
+            objs = namespace2dict(context)
 
-        # if nb_disease == 0:
-        cv2.imwrite(osp.join(img_target, '%s.jpg'%name), jpg_img)
-        # cv2.imwrite(osp.join(vis_target, name + '_%02d.jpg' % nb_disease),
-        #             cv2.hconcat([jpg_img_boxes, jpg_img_polygons]))
-        cv2.imwrite(osp.join(mask_target, '%s.png'%name), jpg_mask)
-        # save_json(osp.join(json_target, name + '_%02d.json' % nb_disease), objs)
+            # draw bbox image
+            # jpg_img_boxes = jl.draw_bboxes(jpg_img, attributes)
+            # draw polygon image
+            jpg_img_polygons = jl.draw_polygons(jpg_img, attributes)
+            # draw image
+            jpg_mask = jl.draw_mask(jpg_img, attributes, c=(1, 1, 1), single_channel=True)
+            # jpg_mask = cv2.resize(jpg_mask, (512, 512), interpolation=cv2.INTER_NEAREST_EXACT)
+
+            # if nb_disease == 0:
+            cv2.imwrite(osp.join(img_target, '%s.jpg'%name), jpg_img)
+            # cv2.imwrite(osp.join(vis_target, name + '_%02d.jpg' % nb_disease),
+            #             cv2.hconcat([jpg_img_boxes, jpg_img_polygons]))
+            cv2.imwrite(osp.join(mask_target, '%s.png'%name), jpg_mask)
+            # save_json(osp.join(json_target, name + '_%02d.json' % nb_disease), objs)
 
     print('The number of disease: %d, disease image/no disease image/total: %d/%d/%d' % (disease_counter,
                                                                                          dis_img_counter,

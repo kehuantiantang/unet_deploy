@@ -53,7 +53,7 @@ class Polygon_Json(object):
         self.polygon_dict['imagePath'] = path
 
 
-    def write_json(self, output_dir, name):
+    def write_json(self, output_dir, name, IoU_threshold = -1):
         '''
         if IoU score small than threshold it will not draw
         Args:
@@ -65,18 +65,19 @@ class Polygon_Json(object):
 
         '''
         for score, polygon in zip(self.scores, self.pred_polygons):
-            polygon_template = {"label": '00000000', "score": '%.2f'%(score*100), "points":
-                polygon.tolist(),
-                                "group_id":
-                                    "null",
-                                "shape_type": "polygon", "flags": {}}
-            self.polygon_dict["shapes"].append(polygon_template)
+            if score > IoU_threshold:
+                polygon_template = {"label": '00000000', "score": '%.2f'%(score*100), "points":
+                    polygon.tolist(),
+                                    "group_id":
+                                        "null",
+                                    "shape_type": "polygon", "flags": {}}
+                self.polygon_dict["shapes"].append(polygon_template)
 
         with open(os.path.join(output_dir, '%s.json'%name), 'w', encoding="utf-8") as f:
             json.dump(self.polygon_dict, f, indent=4)
 
 
-    def draw_polygons(self, raw_img_path, target_path,  extension = 'tif'):
+    def draw_polygons(self, raw_img_path, target_path,  extension = 'tif', IoU_threshold = -1):
         '''
         if the iou score small than IoU threshold, it will not draw
         Args:
@@ -98,6 +99,7 @@ class Polygon_Json(object):
             # draw pred
             pred_polygons = []
             for score, polygon in zip(self.scores, self.pred_polygons):
+                if score > IoU_threshold:
                     pred_polygons.append(polygon)
 
             img = cv2.polylines(img, pred_polygons, True, (0, 255, 0), 2)

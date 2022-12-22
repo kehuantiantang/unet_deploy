@@ -10,7 +10,6 @@ ROOT=/mnt/d/jbu/평가프로그램_v3/${PROJECT_NAME}
 ROOT_DATASET=/mnt/d/jbu/0.datasets
 
 
-
 EVAL_DATASET=/home/jovyan/datasets/2.labeled/${DATASET_NAME}
 VOC_DATASET=/home/jovyan/datasets/3.generated/${DATASET_NAME}
 OUTPUT_ROOT=/home/jovyan/datasets/7.evaluations/${PROJECT_NAME}_${DATASET_NAME}

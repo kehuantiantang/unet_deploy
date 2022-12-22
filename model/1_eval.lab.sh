@@ -4,8 +4,11 @@ MODEL_NAME=unet
 PROJECT_NAME=${MODEL_NAME}_deploy
 
 #DATASET_NAME=small
-DATASET_NAME=final_small
-ROOT_DATASET=/dataset/khtt/dataset/pine2022/ECOM
+#DATASET_NAME=final_small
+
+DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_orderedAll
+#DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_30
+ROOT_DATASET=/dataset/khtt/dataset/pine2022/elcom
 
 #DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_orderedAll
 #ROOT_DATASET=/dataset/khtt/dataset/pine2022/elcom
@@ -34,7 +37,7 @@ docker run -it -u 0 --rm \
     --input=${EVAL_DATASET} \
     --voc=${VOC_DATASET} \
     --output=${OUTPUT_ROOT} \
-    --IoU 0.1 \
+    --IoU 0.4 \
     --eval=mIoU \
     --model_path=/home/jovyan/model/weights/${MODEL_NAME}/best_mIoU_iter_12000unet.pth
 
