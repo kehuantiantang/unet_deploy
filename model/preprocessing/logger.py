@@ -11,7 +11,7 @@ DEFAULT_LOGFILE_LEVEL = 'debug'
 DEFAULT_STDOUT_LEVEL = 'info'
 DEFAULT_LOG_FILE = './default.log'
 
-VERSION = '1.1.2'
+VERSION = '1.1.3'
 DEFAULT_LOG_FORMAT = VERSION + '|%(asctime)s %(levelname)-7s %(message)s'
 
 

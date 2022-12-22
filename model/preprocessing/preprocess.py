@@ -110,7 +110,7 @@ def data_processing(root, target_path):
 
         nb_disease = len(attributes['polygons'])
 
-        if len(nb_disease) > 0:
+        if nb_disease > 0:
 
             disease_counter += nb_disease
             if nb_disease > 0:
