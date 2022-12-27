@@ -127,7 +127,8 @@ def cal_f1_scoreByIoU(polygon_dict):
 
     acc = nb_tp / (nb_tp + nb_fp + nb_fn + 1e-16)
 
-    Logger.info(f'{f1_score}, recall:{round(recall, 3)}, prec:{round(precision, 3)}, tp:{nb_tp}, fp:{nb_fp}, fn:{nb_fn}, gt:{nb_gt}')
+    info = f'{f1_score}, recall:{round(recall, 3)}, prec:{round(precision, 3)}, tp:{nb_tp}, fp:{nb_fp}, fn:{nb_fn}, gt:{nb_gt}'
+    Logger.info(info)
 
 
     return acc, f1_score

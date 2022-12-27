@@ -4,7 +4,7 @@
 import sys
 sys.path.append('./')
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 from model.preprocessing.logger import Logger, VERSION
 from model.preprocessing.logger import self_print as print
 

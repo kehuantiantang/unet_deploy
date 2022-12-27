@@ -103,6 +103,7 @@ def data_processing(root, target_path):
             assert len(jpg_img.shape) == 3
             context = jl.load_json(json_path)
             attributes = jl.get_objects(context)
+
         except Exception as e:
             print(e)
             warnings.warn('Image %s has problem'%jpg_path)

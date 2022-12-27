@@ -182,7 +182,7 @@ def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
 
 
     polygon_dict = {}
-    for filename in tqdm(sorted(os.listdir(pred_mask_dir)), desc='Polygon compare'):
+    for filename in tqdm(sorted(os.listdir(pred_mask_dir)), desc='Polygon comp, IoU:%.2f, Method:%s'%(args.IoU, args.compare_method)):
         raw_name, extension = filename.split('.')
         if extension in ['tif', 'jpg', 'png']:
             # find the polygon in each predict images
