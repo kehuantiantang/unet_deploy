@@ -204,15 +204,15 @@ def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
             if osp.exists(gt_mask_path):
                 if args.compare_method == 'mask':
                     gt_mask = cv2.imread(gt_mask_path)
-                    # shape m * n * 2, m object, n points, (x, y)
+                    # tuple, shape m * n * 2, m object, n points, (x, y)
                     gt_polygons = get_coor(gt_mask)
-                    # print('mask', '='*10)
+
                 elif args.compare_method == 'json':
                     json_path = osp.join(args.input, '%s.json'%raw_name)
                     context = jl.load_json(json_path)
                     gt_polygons = jl.get_objects(context)['polygons']
                     gt_polygons = [np.array(polygon).reshape((-1, 1, 2)) for polygon in gt_polygons]
-                    # print('json', '='*10)
+
                 else:
                     raise ValueError('Can only use compare method mask or json, but get %s'%args.compare_method)
 
