@@ -4,13 +4,13 @@ import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import sys
 sys.path.append('./')
-from model.preprocessing.logger import self_print as print
 import argparse
 import copy
 import os.path as osp
 import time
 import warnings
-
+from model.preprocessing.logger import Logger, VERSION
+from model.preprocessing.logger import self_print as print
 import mmcv
 import torch
 import torch.distributed as dist
@@ -108,7 +108,13 @@ def parse_args():
         action='store_true',
         help='resume from the latest checkpoint automatically.')
     args = parser.parse_args()
+
     args.load_from = args.load_from.replace('MODEL_NAME', args.model)
+
+    if not os.path.exists(args.load_from):
+        print('load_from is not exist, set to empty', args.load_from)
+        args.load_from = ''
+
 
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
@@ -123,6 +129,7 @@ def parse_args():
                       '--options will not be supported in version v0.22.0.')
         args.cfg_options = args.options
 
+
     return args
 
 def read_directory(directory_name, txt_save_path):
@@ -135,6 +142,8 @@ def read_directory(directory_name, txt_save_path):
 
 
 def main():
+    timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+
     args = parse_args()
 
     # data preprocessing
@@ -157,10 +166,13 @@ def main():
         # configs = '/home/zeta1996/job_jsc_ai_2022_serving_mmsegmentation/model/jbnu/my_model/unet/fcn_unet_s5-d16_128x128_40k_chase_db1.py'
     elif args.model == 'deeplabv3':
         configs = '/home/jovyan/model/jbnu/my_model/deeplabv3plus/deeplabv3plus_r50-d8_512x512_20k_voc12aug.py'
+    elif args.model == 'segformer-b5':
+        configs = '/home/jovyan/model/jbnu/my_model/segformer/segformer_mit-b5.py'
     else:
         print('You cannot use this model')
 
     args.config = configs
+
 
     #     read config file
     cfg = Config.fromfile(args.config)
@@ -190,6 +202,8 @@ def main():
         # use config filename as default work_dir if cfg.work_dir is None
         cfg.work_dir = osp.join('./work_dirs',
                                 osp.splitext(osp.basename(args.config))[0])
+
+    cfg.work_dir = '%s-%s'%(cfg.work_dir, timestamp)
     if args.load_from is not None:
         cfg.load_from = args.load_from
     if args.resume_from is not None:
@@ -226,10 +240,15 @@ def main():
     mmcv.mkdir_or_exist(osp.abspath(cfg.work_dir))
     # dump config
     cfg.dump(osp.join(cfg.work_dir, osp.basename(args.config)))
-    # init the logger before other steps
-    timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+
+
+
     log_file = osp.join(cfg.work_dir, f'{timestamp}.log')
-    logger = get_root_logger(log_file=log_file, log_level=cfg.log_level)
+    Logger.init(log_file=log_file, logfile_level='debug', stdout_level=cfg.log_level)
+    Logger.debug(configs)
+
+
+
 
     # set multi-process settings
     setup_multi_processes(cfg)
@@ -241,19 +260,19 @@ def main():
     env_info_dict = collect_env()
     env_info = '\n'.join([f'{k}: {v}' for k, v in env_info_dict.items()])
     dash_line = '-' * 60 + '\n'
-    logger.info('Environment info:\n' + dash_line + env_info + '\n' +
+    Logger.info('Environment info:\n' + dash_line + env_info + '\n' +
                 dash_line)
     meta['env_info'] = env_info
 
     # log some basic info
-    logger.info(f'Distributed training: {distributed}')
-    logger.info(f'Config:\n{cfg.pretty_text}')
+    Logger.info(f'Distributed training: {distributed}')
+    Logger.info(f'Config:\n{cfg.pretty_text}')
 
     # set random seeds
     cfg.device = get_device()
     seed = init_random_seed(args.seed, device=cfg.device)
     seed = seed + dist.get_rank() if args.diff_seed else seed
-    logger.info(f'Set random seed to {seed}, '
+    Logger.info(f'Set random seed to {seed}, '
                 f'deterministic: {args.deterministic}')
     set_random_seed(seed, deterministic=args.deterministic)
     cfg.seed = seed
@@ -274,7 +293,7 @@ def main():
             'avoid this error.')
         model = revert_sync_batchnorm(model)
 
-    logger.info(model)
+    Logger.info(model)
 
     datasets = [build_dataset(cfg.data.train)]
     if len(cfg.workflow) == 2:

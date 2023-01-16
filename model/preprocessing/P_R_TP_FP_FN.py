@@ -1,4 +1,4 @@
-
+import copy
 import os
 import os.path as osp
 import json
@@ -53,7 +53,7 @@ class Polygon_Json(object):
         self.polygon_dict['imagePath'] = path
 
 
-    def write_json(self, output_dir, name, IoU_threshold = -1):
+    def write_json(self, output_dir, name, IoU_threshold = -1, write_gt_json = False):
         '''
         if IoU score small than threshold it will not draw
         Args:
@@ -64,17 +64,34 @@ class Polygon_Json(object):
         Returns:
 
         '''
+        polygon_dict = copy.deepcopy(self.polygon_dict)
         for score, polygon in zip(self.scores, self.pred_polygons):
             if score > IoU_threshold:
+                # print('%s pred'%name, polygon.shape)
                 polygon_template = {"label": '00000000', "score": '%.2f'%(score*100), "points":
                     polygon.tolist(),
                                     "group_id":
                                         "null",
                                     "shape_type": "polygon", "flags": {}}
-                self.polygon_dict["shapes"].append(polygon_template)
+                polygon_dict["shapes"].append(polygon_template)
 
         with open(os.path.join(output_dir, '%s.json'%name), 'w', encoding="utf-8") as f:
-            json.dump(self.polygon_dict, f, indent=4)
+            json.dump(polygon_dict, f, indent=4)
+
+
+        if write_gt_json:
+            polygon_dict = copy.deepcopy(self.polygon_dict)
+            for polygon in self.gt_polygons:
+                # print('%s gt'%name, polygon.shape)
+                polygon_template = {"label": '00000000', "score": '%.2f'%(100), "points":
+                    polygon[:, 0].tolist(),
+                                    "group_id":
+                                        "null",
+                                    "shape_type": "polygon", "flags": {}}
+                polygon_dict["shapes"].append(polygon_template)
+
+            with open(os.path.join(output_dir, '%s_gt.json'%name), 'w', encoding="utf-8") as f:
+                json.dump(polygon_dict, f, indent=4)
 
 
     def draw_polygons(self, raw_img_path, target_path,  extension = 'tif', IoU_threshold = -1):
@@ -127,7 +144,7 @@ def cal_f1_scoreByIoU(polygon_dict):
 
     acc = nb_tp / (nb_tp + nb_fp + nb_fn + 1e-16)
 
-    info = f'{f1_score}, recall:{round(recall, 3)}, prec:{round(precision, 3)}, tp:{nb_tp}, fp:{nb_fp}, fn:{nb_fn}, gt:{nb_gt}'
+    info = f'f1_score:{f1_score}, recall:{round(recall, 3)}, prec:{round(precision, 3)}, tp:{nb_tp}, fp:{nb_fp}, fn:{nb_fn}, gt:{nb_gt}'
     Logger.info(info)
 
 

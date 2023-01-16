@@ -11,7 +11,7 @@ DEFAULT_LOGFILE_LEVEL = 'debug'
 DEFAULT_STDOUT_LEVEL = 'info'
 DEFAULT_LOG_FILE = './default.log'
 
-VERSION = '1.1.4'
+VERSION = '1.1.6'
 DEFAULT_LOG_FORMAT = VERSION + '|%(asctime)s %(levelname)-7s %(message)s'
 
 
@@ -96,6 +96,7 @@ class Logger(object):
             console.setFormatter(fmt)
             Logger.logger.addHandler(console)
 
+        Logger.logger.propagate = False
         print('Version: {}'.format(VERSION), '=' * 50)
 
     @staticmethod

@@ -21,6 +21,7 @@ def get_coor(img):
 
     final_contours = []
     for i, contour in enumerate(contours):
+        # ignore the small polygon
         if len(contour) < 20 or cv2.contourArea(contour) < 16*16:
             continue
 
@@ -145,10 +146,10 @@ def pairs_iou(pred_polygons, gt_polygons, h, w, IoU_threshold = 0.5):
 
 
 
-def writeJsonAndImg(pj, filename, img_dir, output_dir, extension = 'jpg'):
+def writeJsonAndImg(pj, filename, img_dir, output_dir, extension = 'jpg', write_gt_json = False):
     pj.set_img_path(filename.replace('png', 'jpg'))
     pj.draw_polygons(raw_img_path=img_dir, target_path = output_dir, extension=extension)
-    pj.write_json(output_dir, filename.split('.')[0])
+    pj.write_json(output_dir, filename.split('.')[0], write_gt_json = write_gt_json)
 
 
 def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
@@ -166,14 +167,8 @@ def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
 
     jl = JsonLoader()
 
-    if model_name == 'unet':
-        detect_dir = f'/{output_dir}/{model_name}_mask/'  # yuce
-        gt_mask_dir = f'{voc_dir}/SegmentationClass'  # label
-    elif model_name == 'deeplabv3':
-        detect_dir = f'/{output_dir}/{model_name}_mask/'  # yuce
-        gt_mask_dir = f'{voc_dir}/SegmentationClass'  # label
-    else:
-        print('Can not use the model')
+    detect_dir = f'/{output_dir}/{model_name}_mask/'  # yuce
+    gt_mask_dir = f'{voc_dir}/SegmentationClass'  # label
 
     os.makedirs(detect_dir, exist_ok=True)
     os.makedirs(gt_mask_dir, exist_ok=True)
@@ -236,7 +231,7 @@ def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
                 [pj.add_polygon(iou, polygon) for (iou, polygon) in fps]
                 [pj.add_polygon(iou, polygon) for (iou, polygon) in fp_repeats]
 
-                print('tp: %d, fp: %d, fp_repeat: %d, gt:%d, %s'%(len(tps), len(fps), len(fp_repeats), len(gt_polygons), raw_name))
+                # print('tp: %d, fp: %d, fp_repeat: %d, gt:%d, %s'%(len(tps), len(fps), len(fp_repeats), len(gt_polygons), raw_name))
 
 
                 # polygon_dict[raw_name]['pred'] = with_polygons
@@ -251,9 +246,9 @@ def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
 
             if status == 'eval':
                 kwds = {'pj':pj, 'filename':filename, 'img_dir':f'/{voc_dir}/JPEGImages', 'output_dir':output_dir,
-                        'extension':'jpg'}
+                        'extension':'jpg', 'write_gt_json':args.write_gt_json}
             elif status == 'inference':
-                kwds = {'pj':pj, 'filename':filename, 'img_dir':input_dir, 'output_dir':output_dir, 'extension':'tif'}
+                kwds = {'pj':pj, 'filename':filename, 'img_dir':input_dir, 'output_dir':output_dir, 'extension':'tif', 'write_gt_json':args.write_gt_json}
             else:
                 raise ValueError('Status must be [eval, inference] but obtain %s'%status)
 

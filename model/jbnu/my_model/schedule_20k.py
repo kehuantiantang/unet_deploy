@@ -5,6 +5,6 @@ optimizer_config = dict()
 lr_config = dict(policy='poly', power=0.9, min_lr=1e-4, by_epoch=False)
 # runtime settingsls
 
-runner = dict(type='IterBasedRunner', max_iters=20000)
-checkpoint_config = dict(by_epoch=False, interval=20, create_symlink = False)
-evaluation = dict(interval=200, metric='mIoU', pre_eval=True)
+runner = dict(type='IterBasedRunner', max_iters=200000)
+checkpoint_config = dict(by_epoch=False, interval=20000, create_symlink = False)
+evaluation = dict(interval=200, metric='mIoU', pre_eval=True, save_best='mIoU')

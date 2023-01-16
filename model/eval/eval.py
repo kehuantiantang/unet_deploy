@@ -143,6 +143,7 @@ def parse_args():
         help='Opacity of painted segmentation map. In (0, 1] range.')
     parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument('--compare_method', type=str, default='mask')
+    parser.add_argument('--write_gt_json', action='store_true')
 
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
@@ -223,8 +224,12 @@ def mask(args):
     elif args.model == 'deeplabv3':
         configs = '/home/jovyan/model/jbnu/my_model/deeplabv3plus/deeplabv3plus_r50-d8_512x512_20k_voc12aug.py'
         pred_mask_dir = f'{args.output}/deeplabv3_mask/'
+    elif args.model == 'segformer-b5':
+        pred_mask_dir = f'{args.output}/segformer-b5_mask/'
+        configs = '/home/jovyan/model/jbnu/my_model/segformer/segformer_mit-b5.py'
     else:
-        print('You cannot use this model')
+        warnings.warn('You cannot use this model')
+        sys.exit(0)
 
     # read all parameters finish
 
@@ -293,9 +298,11 @@ def main():
     elif args.model == 'deeplabv3':
         configs = '/home/jovyan/model/jbnu/my_model/deeplabv3plus/deeplabv3plus_r50-d8_512x512_20k_voc12aug.py'
         maskpath = f'/home/jovyan/logs/deeplabv3_{dataname}/deeplabv3_mask/'
-        # configs = '/home/zeta1996/job_jsc_ai_2022_serving_mmsegmentation/model/jbnu/my_model/deeplabv3plus/deeplabv3plus_r50-d8_512x512_20k_voc12aug.py'
+    elif args.model == 'segformer-b5':
+        configs = '/home/jovyan/model/jbnu/my_model/segformer/segformer_mit-b5.py'
     else:
-        print('You cannot use this model')
+        warnings.warn('You cannot use this model')
+        sys.exit(0)
 
     # read all parameters finish
 
@@ -511,6 +518,7 @@ def main():
             metric = dataset.evaluate(results, **eval_kwargs)
             metric_dict = dict(config=args.config, metric=metric)
             mmcv.dump(metric_dict, json_file, indent=4)
+            Logger.debug(metric_dict)
             if tmpdir is not None and eval_on_format_results:
                 # remove tmp dir when cityscapes evaluation
                 shutil.rmtree(tmpdir)
@@ -539,7 +547,7 @@ def main():
     result = {}
     result['Acc'], result['mAcc'], result['mIoU'], result['IoU'], result['f1-score'], result['oAcc'] = a1['metric']['aAcc'], \
          a1['metric']['mAcc'], a1['metric']['mIoU'], a1['metric']['IoU.diseases'], f1, acc
-    print(result)
+    Logger.info(result)
 
     with open(txt, 'w', encoding='utf-8') as f:
         f.write('%s'%result)
