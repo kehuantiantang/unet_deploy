@@ -1,5 +1,3 @@
-import pickle
-from collections import defaultdict
 import warnings
 from multiprocessing.pool import ThreadPool
 import cv2
@@ -7,9 +5,7 @@ import os
 import os.path as osp
 import numpy as np
 from tqdm import tqdm
-
-from model.preprocessing.logger import self_print as print, Logger
-
+from model.preprocessing.logger import Logger
 from model.preprocessing.P_R_TP_FP_FN import Polygon_Json
 from model.preprocessing.json_polygon import JsonLoader
 
@@ -234,13 +230,6 @@ def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
 
                 Logger.debug('tp: %d, fp: %d, fp_repeat: %d, gt:%d, %s'%(len(tps), len(fps), len(fp_repeats), len(gt_polygons), raw_name))
 
-
-                # save tp/fp/tp_repeat/gt polygon to pkl files
-                with open(osp.join(output_dir, 'tp_fp_gt.pkl'), 'wb') as f:
-                    pickle.dump(polygon_dict[raw_name], f)
-                Logger.info('Save tp/fp/tp_repeat/gt polygon to pkl files, %s'%osp.join(output_dir, 'tp_fp_gt.pkl'))
-
-
             else:
                 for polygon in pred_polygons:
                     pj.add_polygon(0, polygon[:, 0])
@@ -248,6 +237,8 @@ def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
             if status == 'eval':
                 kwds = {'pj':pj, 'filename':filename, 'img_dir':f'/{voc_dir}/JPEGImages', 'output_dir':output_dir,
                         'extension':'jpg', 'write_gt_json':args.write_gt_json}
+                # save tp/fp/tp_repeat/gt polygon to pkl files
+
             elif status == 'inference':
                 kwds = {'pj':pj, 'filename':filename, 'img_dir':input_dir, 'output_dir':output_dir, 'extension':'tif', 'write_gt_json':args.write_gt_json}
             else:
@@ -262,6 +253,7 @@ def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
 
     threadpool.close()
     threadpool.join()
+
 
     return polygon_dict
 

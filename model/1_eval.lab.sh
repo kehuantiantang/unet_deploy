@@ -6,6 +6,7 @@ PROJECT_NAME=${MODEL_NAME}_deploy
 DATASET_NAME=small
 #DATASET_NAME=final_small
 
+#DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_70+7000
 #DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_orderedAll_det30
 #DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_orderedAll
 
@@ -29,7 +30,7 @@ docker run -it -u 0 --rm \
 	-v ${ROOT_DATASET}:/home/jovyan/datasets \
 	-v ${ROOT}/logs:/home/jovyan/logs \
   -v /etc/localtime:/etc/localtime:ro \
-    --gpus 'device=0' \
+    --gpus 'device=1' \
  deploy/unet1.0 \
     python /home/jovyan/model/eval/eval.py --model=${MODEL_NAME} \
     --input=${EVAL_DATASET} \

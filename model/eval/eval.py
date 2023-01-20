@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # encoding='utf-8'
-
+import pickle
 import sys
 sys.path.append('./')
 import os
@@ -530,6 +530,11 @@ def main():
 
     # mask convert to json
     polygon_dict = record_coordinate2json(pred_mask_dir, args, target_path, 'eval')
+
+    with open(osp.join(args.output, 'tp_fp_gt.pkl'), 'wb') as f:
+        pickle.dump(polygon_dict, f)
+    Logger.info('Save tp/fp/tp_repeat/gt polygon to pkl files, %s' % osp.join(args.output, 'tp_fp_gt.pkl'))
+
     # obtain the tp, fp, tn, fn to calculate the precision, recall, f1-score
 
     # import sys
