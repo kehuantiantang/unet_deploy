@@ -3,8 +3,8 @@
 MODEL_NAME=segformer-b5
 PROJECT_NAME=${MODEL_NAME}_deploy
 
-#DATASET_NAME=split_test_a
-DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_seg_30
+DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_70+7000
+#DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_seg_30
 
 ROOT=/home/khtt/code/insitute_demo/unet_deploy
 #ROOT_DATASET=/dataset/khtt/dataset/pine2022/ECOM
@@ -23,7 +23,7 @@ docker run -it -u 0 --rm \
 	-v ${ROOT_DATASET}:/home/jovyan/datasets \
 	-v ${ROOT}/logs:/home/jovyan/logs \
     -v /etc/localtime:/etc/localtime:ro \
-	--gpus 'device=1' \
+	--gpus 'device=0' \
  deploy/unet1.0 \
 	python /home/jovyan/model/train/train.py --model=${MODEL_NAME}  \
     --input=${TRAIN_DATASET} \

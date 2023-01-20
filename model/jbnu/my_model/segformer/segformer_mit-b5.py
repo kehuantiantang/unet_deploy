@@ -73,7 +73,7 @@ lr_config = dict(
     min_lr=0.0,
     by_epoch=True)
 
-runner = dict(type='EpochBasedRunner', max_epochs=500)
+runner = dict(type='EpochBasedRunner', max_epochs=50000)
 checkpoint_config = dict(by_epoch=True, interval=1, create_symlink = False)
-evaluation = dict(interval=2, metric='mIoU', pre_eval=True, save_best='mIoU')
+evaluation = dict(interval=1000, metric='mIoU', pre_eval=True, save_best='mIoU')
 

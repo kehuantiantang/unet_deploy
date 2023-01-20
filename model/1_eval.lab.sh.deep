@@ -1,26 +1,22 @@
 #!/bin/bash
 
-MODEL_NAME=unet
+MODEL_NAME=deeplabv3
 PROJECT_NAME=${MODEL_NAME}_deploy
 
-DATASET_NAME=small
-#DATASET_NAME=final_small
+DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_seg_30
 
-#DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_orderedAll_det30
-#DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_orderedAll
+#DATASET_NAME=small
 
-#DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_seg_30
+ROOT_DATASET=/dataset/khtt/dataset/pine2022/elcom
+#ROOT_DATASET=/dataset/khtt/dataset/pine2022/ECOM/
 
-
-#ROOT_DATASET=/dataset/khtt/dataset/pine2022/elcom
-ROOT_DATASET=/dataset/khtt/dataset/pine2022/ECOM/
-
-ROOT=/home/khtt/code/insitute_demo/${PROJECT_NAME}
+ROOT=/home/khtt/code/insitute_demo/unet_deploy
 
 
 EVAL_DATASET=/home/jovyan/datasets/2.labled/${DATASET_NAME}
 VOC_DATASET=/home/jovyan/datasets/3.generated/${DATASET_NAME}
 OUTPUT_ROOT=/home/jovyan/datasets/7.evaluations/${PROJECT_NAME}_${DATASET_NAME}
+
 
 
 docker run -it -u 0 --rm \
@@ -35,8 +31,8 @@ docker run -it -u 0 --rm \
     --input=${EVAL_DATASET} \
     --voc=${VOC_DATASET} \
     --output=${OUTPUT_ROOT} \
-    --IoU 0.5 \
+    --IoU=0.5 \
     --eval=mIoU \
-    --model_path=/home/jovyan/model/weights/${MODEL_NAME}/best_mIoU_iter_12000unet.pth \
+    --model_path=/home/jovyan/model/weights/${MODEL_NAME}/best_mIoU_iter_80000_ce_sgd.pth \
     --compare_method=mask
 

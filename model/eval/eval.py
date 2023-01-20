@@ -321,8 +321,8 @@ def main():
     args.work_dir = args.output
 
     os.makedirs(args.work_dir, exist_ok=True)
-    Logger.init(log_file = osp.join(args.work_dir, 'default.log'))
-    Logger.debug('%s'%args.config)
+    Logger.init(log_file = osp.join(args.work_dir, 'default.log'), stdout_level='info')
+    Logger.debug('%s'%args)
 
     if args.eval and args.format_only:
         raise ValueError('--eval and --format_only cannot be both specified')

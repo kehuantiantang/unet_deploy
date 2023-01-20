@@ -3,12 +3,12 @@
 MODEL_NAME=segformer-b5
 PROJECT_NAME=${MODEL_NAME}_deploy
 
-DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_seg_30
+#DATASET_NAME=CONTOUR_V3_20221122_145813_R12345_25000_Tag_seg_30
 
-#DATASET_NAME=small
+DATASET_NAME=small
 
-ROOT_DATASET=/dataset/khtt/dataset/pine2022/elcom
-#ROOT_DATASET=/dataset/khtt/dataset/pine2022/ECOM/
+#ROOT_DATASET=/dataset/khtt/dataset/pine2022/elcom
+ROOT_DATASET=/dataset/khtt/dataset/pine2022/ECOM/
 
 ROOT=/home/khtt/code/insitute_demo/unet_deploy
 
@@ -32,6 +32,6 @@ docker run -it -u 0 --rm \
     --output=${OUTPUT_ROOT} \
     --IoU 0.5 \
     --eval=mIoU \
-    --model_path=/home/jovyan/datasets/5.artifacts/segformer-b5_deploy_CONTOUR_V3_20221122_145813_R12345_25000_Tag_70+7000-20230112_105612/epoch_100.pth \
+    --model_path=/home/jovyan/datasets/5.artifacts/segformer-b5_deploy_CONTOUR_V3_20221122_145813_R12345_25000_Tag_70+7000-20230112_105612/epoch_150.pth \
     --compare_method=mask
 

@@ -11,7 +11,7 @@ DEFAULT_LOGFILE_LEVEL = 'debug'
 DEFAULT_STDOUT_LEVEL = 'info'
 DEFAULT_LOG_FILE = './default.log'
 
-VERSION = '1.1.6'
+VERSION = '1.1.7'
 DEFAULT_LOG_FORMAT = VERSION + '|%(asctime)s %(levelname)-7s %(message)s'
 
 
@@ -57,7 +57,7 @@ class Logger(object):
         Logger.rewrite = rewrite
         Logger.stdout_level = stdout_level
 
-        Logger.logger = logging.getLogger()
+        Logger.logger = logging.getLogger(__name__)
         Logger.logger.handlers = []
         fmt = logging.Formatter(Logger.log_format)
 

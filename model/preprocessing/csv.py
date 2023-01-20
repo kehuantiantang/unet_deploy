@@ -1,3 +1,4 @@
+import pickle
 from collections import defaultdict
 import warnings
 from multiprocessing.pool import ThreadPool
@@ -7,7 +8,7 @@ import os.path as osp
 import numpy as np
 from tqdm import tqdm
 
-from model.preprocessing.logger import self_print as print
+from model.preprocessing.logger import self_print as print, Logger
 
 from model.preprocessing.P_R_TP_FP_FN import Polygon_Json
 from model.preprocessing.json_polygon import JsonLoader
@@ -231,14 +232,14 @@ def record_coordinate2json(pred_mask_dir, args, voc_dir, status):
                 [pj.add_polygon(iou, polygon) for (iou, polygon) in fps]
                 [pj.add_polygon(iou, polygon) for (iou, polygon) in fp_repeats]
 
-                # print('tp: %d, fp: %d, fp_repeat: %d, gt:%d, %s'%(len(tps), len(fps), len(fp_repeats), len(gt_polygons), raw_name))
+                Logger.debug('tp: %d, fp: %d, fp_repeat: %d, gt:%d, %s'%(len(tps), len(fps), len(fp_repeats), len(gt_polygons), raw_name))
 
 
-                # polygon_dict[raw_name]['pred'] = with_polygons
-                # polygon_dict[raw_name]['pred_score'] = part_ious
+                # save tp/fp/tp_repeat/gt polygon to pkl files
+                with open(osp.join(output_dir, 'tp_fp_gt.pkl'), 'wb') as f:
+                    pickle.dump(polygon_dict[raw_name], f)
+                Logger.info('Save tp/fp/tp_repeat/gt polygon to pkl files, %s'%osp.join(output_dir, 'tp_fp_gt.pkl'))
 
-
-                # pj.add_polygons(part_ious, with_polygons)
 
             else:
                 for polygon in pred_polygons:
